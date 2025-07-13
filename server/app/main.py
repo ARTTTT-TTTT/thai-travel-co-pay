@@ -72,7 +72,8 @@ async def health_check():
         return {"status": "ok"}
     except Exception:
         return JSONResponse(
-            content={"status": "unhealthy"}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+            content={"status": "unhealthy"},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
 

@@ -11,7 +11,10 @@ dot.node("Operator", "Operator\noperator_id, user_id, business_name, ...")
 dot.node("Province", "Province\nprovince_id, name_th, name_en, region, ...")
 dot.node("Booking", "Booking\nbooking_id, tourist_id, hotel_operator_id, ...")
 dot.node("ECoupon", "ECoupon\ncoupon_id, booking_id, tourist_id, ...")
-dot.node("CouponTransaction", "CouponTransaction\ntransaction_id, coupon_id, service_operator_id, ...")
+dot.node(
+    "CouponTransaction",
+    "CouponTransaction\ntransaction_id, coupon_id, service_operator_id, ...",
+)
 dot.node("ProjectConfig", "ProjectConfig\nconfig_key, config_value, ...")
 
 # 🔗 Relationships (Edges)

@@ -1,6 +1,6 @@
 # schemas/user_schema.py
 import re
-from pydantic import BaseModel, EmailStr, model_validator, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -18,7 +18,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    
+
     @field_validator("email")
     @classmethod
     def validate_email(cls, v: Optional[str]) -> Optional[str]:
@@ -63,12 +63,6 @@ class UserCreate(UserBase):
                 "Last name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long."
             )
         return v.strip()
-
-    @model_validator(mode="after")
-    def check_email_or_phone_number(self) -> "UserCreate":
-        if not self.email or not self.phone_number:
-            raise ValueError("Both email and phone number must be provided.")
-        return self
 
 
 class UserOut(UserBase):

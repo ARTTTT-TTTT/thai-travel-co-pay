@@ -95,22 +95,10 @@ poetry env info --path
 
 ---
 
-### 🛢 First Initial Database 🛢
+## 🛢 First Initial Database 🛢
 
 ```bash
 ./alembic/init_db.sh
-```
-
-### ⚙️ Alembic Revision ⚙️
-
-```bash
-alembic revision --autogenerate -m "add initial tables"
-```
-
-### 💾 Alembic Upgrade 💾
-
-```bash
-alembic upgrade head
 ```
 
 ---

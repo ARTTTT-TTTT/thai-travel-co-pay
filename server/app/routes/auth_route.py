@@ -21,22 +21,23 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 async def register(user_create: UserCreate, db: AsyncSession = Depends(get_db)):
     existing_user_by_email = await crud.get_user_by_email(db, user_create.email)
     if existing_user_by_email:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     existing_user_by_phone = await crud.get_user_by_phone_number(db, user_create.phone_number)
     if existing_user_by_phone:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Phone number already registered"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Phone number already registered",
         )
 
     existing_user_by_citizen_id = await crud.get_user_by_citizen_id(db, user_create.citizen_id)
     if existing_user_by_citizen_id:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Citizen id already taken")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Citizen id already registered"
+        )
 
-    hashed_password = get_password_hash(user_create.password)
-    user = await crud.create_user(db, user_create, hashed_password)
+    password_hash = get_password_hash(user_create.password)
+    user = await crud.create_user(db, user_create, password_hash)
     return user
 
 

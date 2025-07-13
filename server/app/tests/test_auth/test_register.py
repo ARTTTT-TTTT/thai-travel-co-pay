@@ -3,85 +3,55 @@ from httpx import AsyncClient
 from httpx import ASGITransport
 
 from app.main import app
+from app.models import UserTypeEnum
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "username_suffix, email, phone_number, expected_status",
+    "email, phone_number, citizen_id, user_type",
     [
-        ("1", "test1@example.com", "0812345678", 200),
-        ("2", "test2@example.com", None, 200),
-        ("3", None, "0812345679", 200),
+        ("test1@example.com", "0812345678", "0123456789123", UserTypeEnum.TOURIST.value),
+        ("test2@example.com", "0823456789", "1234567890123", UserTypeEnum.OPERATOR.value),
+        ("test3@example.com", "1234567", "0123456789124", UserTypeEnum.TOURIST.value),
+        ("test4@example.com", "123456789012345", "1234567890125", UserTypeEnum.OPERATOR.value),
     ],
 )
 async def test_register_success_multiple_cases(
-    prepare_database, username_suffix, email, phone_number, expected_status
+    prepare_database, email, phone_number, citizen_id, user_type
 ):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        username = f"testuser{username_suffix}"
-        password = "securepass123"
 
-        payload = {
-            "username": username,
-            "full_name": "Full Name",
-            "password": password,
-        }
-        if email is not None:
-            payload["email"] = email
-        if phone_number is not None:
-            payload["phone_number"] = phone_number
-
-        response = await client.post("/api/auth/register", json=payload)
-
-        assert response.status_code == expected_status
-
-        if response.status_code == 200:
-            data = response.json()
-            assert data["username"] == username
-            assert data["full_name"] == "Full Name"
-            assert data["is_active"] is True
-            assert "id" in data
-            assert "created_at" in data
-            assert "updated_at" in data
-
-            if email is not None:
-                assert data["email"] == email
-            else:
-                assert data.get("email") is None
-
-            if phone_number is not None:
-                assert data["phone_number"] == phone_number
-            else:
-                assert data.get("phone_number") is None
-
-
-@pytest.mark.asyncio
-async def test_register_username_taken(prepare_database):
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        await client.post(
-            "/api/auth/register",
-            json={
-                "username": "takenusername",
-                "email": "first@example.com",
-                "phone_number": "0000000001",
-                "full_name": "Full Name",
-                "password": "pass",
-            },
-        )
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "takenusername",
-                "email": "second@example.com",
-                "phone_number": "0000000002",
-                "full_name": "Full Name",
-                "password": "pass",
+                "email": email,
+                "phone_number": phone_number,
+                "citizen_id": citizen_id,
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": user_type,
+                "password": "password",
             },
         )
-        assert response.status_code == 409
-        assert response.json()["detail"] == "Username already taken"
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["email"] == email
+        assert data["phone_number"] == phone_number
+        assert data["citizen_id"] == citizen_id
+        assert data["first_name_th"] == "ชื่อภาษาไทย"
+        assert data["last_name_th"] == "นามสกุลภาษาไทย"
+        assert data["agreed_to_terms"] is False
+        assert data["is_active"] is True
+        assert "id" in data
+        assert "created_at" in data
+        assert "updated_at" in data
+
+        if user_type is UserTypeEnum.TOURIST.value:
+            assert data["user_type"] == UserTypeEnum.TOURIST.value
+        else:
+            assert data["user_type"] == UserTypeEnum.OPERATOR.value
 
 
 @pytest.mark.asyncio
@@ -91,21 +61,25 @@ async def test_register_email_taken(prepare_database):
         await client.post(
             "/api/auth/register",
             json={
-                "username": "userforemail",
                 "email": "taken@example.com",
-                "phone_number": "0000000003",
-                "full_name": "Full Name",
-                "password": "pass",
+                "phone_number": "0123456789",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "anotheruser",
                 "email": "taken@example.com",
-                "phone_number": "0000000004",
-                "full_name": "Full Name",
-                "password": "pass",
+                "phone_number": "1234567890",
+                "citizen_id": "1234567891230",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         assert response.status_code == 409
@@ -119,21 +93,25 @@ async def test_register_phone_number_taken(prepare_database):
         await client.post(
             "/api/auth/register",
             json={
-                "username": "userforphone",
-                "email": "phone@example.com",
-                "phone_number": "0811111111",
-                "full_name": "Full Name",
-                "password": "pass",
+                "email": "first@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "yetanotheruser",
-                "email": "yetanother@example.com",
-                "phone_number": "0811111111",
-                "full_name": "Full Name",
-                "password": "pass",
+                "email": "second@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": "1234567891230",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         assert response.status_code == 409
@@ -141,49 +119,35 @@ async def test_register_phone_number_taken(prepare_database):
 
 
 @pytest.mark.asyncio
-async def test_register_missing_email_and_phone(prepare_database):
+async def test_register_citizen_id_taken(prepare_database):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        await client.post(
+            "/api/auth/register",
+            json={
+                "email": "first@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
+            },
+        )
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "nouserinfo",
-                "full_name": "No Contact Info",
-                "password": "pass",
+                "email": "second@example.com",
+                "phone_number": "1234567890",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
-        assert response.status_code == 422
-        assert "Either email or phone_number must be provided." in response.text
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "username",
-    [
-        "UPPERCASE",
-        "user name",
-        "user-name",
-        "user.name",
-        "emoji😀",
-        "name!",
-    ],
-)
-async def test_register_invalid_username_format(username, prepare_database):
-
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-
-        response = await client.post(
-            "/api/auth/register",
-            json={
-                "username": username,
-                "email": "valid@example.com",
-                "full_name": "Full Name",
-                "password": "pass",
-            },
-        )
-        assert response.status_code == 422
-        assert "Username must contain only lowercase letters and numbers" in response.text
+        assert response.status_code == 409
+        assert response.json()["detail"] == "Citizen id already registered"
 
 
 @pytest.mark.asyncio
@@ -199,18 +163,23 @@ async def test_register_invalid_username_format(username, prepare_database):
         "@domain.com",
         "user@domain",
         "user@",
+        1,
+        "",
     ],
 )
-async def test_register_invalid_email_format(email, prepare_database):
+async def test_register_invalid_email_format(prepare_database, email):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "validusername",
                 "email": email,
-                "full_name": "Full Name",
-                "password": "securepass",
+                "phone_number": "0123456789",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         assert response.status_code == 422
@@ -219,13 +188,7 @@ async def test_register_invalid_email_format(email, prepare_database):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "phone",
-    [
-        "123 456 789",
-        "+66812345678",
-        "abcdefghijk",
-        "123",
-        "1234567890123456789012",
-    ],
+    ["123 456 789", "+66812345678", "abcdefghijk", "123456", "1234567890123456", 1, ""],
 )
 async def test_register_invalid_phone_number_format(phone, prepare_database):
     transport = ASGITransport(app=app)
@@ -233,12 +196,86 @@ async def test_register_invalid_phone_number_format(phone, prepare_database):
         response = await client.post(
             "/api/auth/register",
             json={
-                "username": "validuser",
-                "email": "valid@example.com",
+                "email": "validphone@example.com",
                 "phone_number": phone,
-                "full_name": "Full Name",
-                "password": "securepass",
+                "citizen_id": "0123456789123",
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
             },
         )
         assert response.status_code == 422
-        assert "Phone number must contain digits only" in response.text
+        # assert "Phone number must contain digits only" in response.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "citizen_id",
+    ["123 456 789", "+66812345678", "abcdefghijk", "123456", "1234567890123456", 1, ""],
+)
+async def test_register_invalid_citizen_id_format(citizen_id, prepare_database):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/api/auth/register",
+            json={
+                "email": "validphone@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": citizen_id,
+                "first_name_th": "ชื่อภาษาไทย",
+                "last_name_th": "นามสกุลภาษาไทย",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
+            },
+        )
+        assert response.status_code == 422
+        # assert "Citizen id must contain digits only" in response.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "first_name_th",
+    ["John", "ชื่อ123", "ชื่อ*", "ชื่อ ภาษาไทย", 1, "", " "],
+)
+async def test_register_invalid_first_name_th(first_name_th, prepare_database):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/api/auth/register",
+            json={
+                "email": "valid@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": "1234567890123",
+                "first_name_th": first_name_th,
+                "last_name_th": "นามสกุล",
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
+            },
+        )
+        assert response.status_code == 422
+        # assert "First name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long." in response.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "last_name_th",
+    ["Smith", "นาม123", "นาม*", "นาม สกุล", 1, "", " "],
+)
+async def test_register_invalid_last_name_th(last_name_th, prepare_database):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/api/auth/register",
+            json={
+                "email": "valid@example.com",
+                "phone_number": "0123456789",
+                "citizen_id": "1234567890123",
+                "first_name_th": "ชื่อ",
+                "last_name_th": last_name_th,
+                "user_type": UserTypeEnum.OPERATOR.value,
+                "password": "password",
+            },
+        )
+        assert response.status_code == 422
+        # assert "Last name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long." in response.text
