@@ -10,7 +10,7 @@ class AppConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
-    PROJECT_NAME: str = "THAI TRAVEL CO PAY CLONE"
+    PROJECT_NAME: str = "THAI TRAVEL CO PAY"
     API_STR: str = "/api"
 
     SECRET_KEY: str = "secret_key"

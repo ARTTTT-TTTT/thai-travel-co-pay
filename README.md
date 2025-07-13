@@ -1,4 +1,4 @@
-# ✈️ Thai Travel Co Pay Clone
+# ✈️ Thai Travel Co Pay
 
 [![Status: Development](https://img.shields.io/badge/Status-Development-yellow)]()
 

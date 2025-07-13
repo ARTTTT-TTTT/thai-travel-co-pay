@@ -1,30 +1,24 @@
-from pydantic import BaseModel, EmailStr, model_validator, field_validator, Field
+# schemas/user_schema.py
+import re
+from pydantic import BaseModel, EmailStr, model_validator, field_validator
 from typing import Optional
 from datetime import datetime
-import re
+
+from app.models import UserTypeEnum
 
 
 class UserBase(BaseModel):
-    username: str
-    email: EmailStr | None
-    phone_number: str | None
-    full_name: str
+    email: EmailStr
+    phone_number: str
+    citizen_id: str
+    first_name_th: str
+    last_name_th: str
+    user_type: UserTypeEnum = UserTypeEnum.TOURIST
 
 
 class UserCreate(UserBase):
-    email: Optional[EmailStr] = Field(default=None)
-    phone_number: Optional[str] = Field(default=None)
     password: str
-
-    @field_validator("username")
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        if not re.fullmatch(r"[a-z0-9]+", v):
-            raise ValueError(
-                "Username must contain only lowercase letters and numbers, no spaces or special characters"
-            )
-        return v.strip().lower()
-
+    
     @field_validator("email")
     @classmethod
     def validate_email(cls, v: Optional[str]) -> Optional[str]:
@@ -35,21 +29,51 @@ class UserCreate(UserBase):
     def validate_phone_number(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return None
-        if not re.fullmatch(r"[0-9]{7,20}", v):
+        if not re.fullmatch(r"[0-9]{7,15}", v):
             raise ValueError(
-                "Phone number must contain digits only (7-20 characters), no spaces or symbols"
+                "Phone number must contain digits only (7-15 characters), no spaces or symbols"
+            )
+        return v.strip()
+
+    @field_validator("citizen_id")
+    @classmethod
+    def validate_citizen_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not re.fullmatch(r"[0-9]{13}", v):
+            raise ValueError(
+                "Citizen id must contain digits only (13 characters), no spaces or symbols"
+            )
+        return v.strip()
+
+    @field_validator("first_name_th")
+    @classmethod
+    def validate_first_name_th(cls, v: str) -> str:
+        if not re.fullmatch(r"[ก-๙]{1,50}", v):
+            raise ValueError(
+                "First name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long."
+            )
+        return v.strip()
+
+    @field_validator("last_name_th")
+    @classmethod
+    def validate_last_name_th(cls, v: str) -> str:
+        if not re.fullmatch(r"[ก-๙]{1,50}", v):
+            raise ValueError(
+                "Last name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long."
             )
         return v.strip()
 
     @model_validator(mode="after")
     def check_email_or_phone_number(self) -> "UserCreate":
-        if not self.email and not self.phone_number:
-            raise ValueError("Either email or phone_number must be provided.")
+        if not self.email or not self.phone_number:
+            raise ValueError("Both email and phone number must be provided.")
         return self
 
 
 class UserOut(UserBase):
     id: int
+    agreed_to_terms: bool
     is_active: bool
     created_at: datetime
     updated_at: datetime

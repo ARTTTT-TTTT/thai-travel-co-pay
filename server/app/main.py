@@ -61,7 +61,7 @@ app.include_router(api_router, prefix=app_config.API_STR)
 
 @app.get("/", tags=["Default"])
 async def root():
-    return {"message": "Welcome to THAI TRAVEL CO PAY CLONE API"}
+    return {"message": "Welcome to THAI TRAVEL CO PAY API"}
 
 
 @app.get("/health", tags=["Monitoring"])
@@ -83,7 +83,7 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title=app.title,
         version="1.0.0",
-        description="API for THAI TRAVEL CO PAY CLONE",
+        description="API for THAI TRAVEL CO PAY",
         routes=app.routes,
     )
 

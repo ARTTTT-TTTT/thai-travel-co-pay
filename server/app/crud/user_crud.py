@@ -4,12 +4,6 @@ from sqlalchemy.future import select
 from app.models import User
 from app.schemas.user_schema import UserCreate
 
-
-async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
-    result = await db.execute(select(User).filter(User.username == username.lower()))
-    return result.scalars().first()
-
-
 async def get_user_by_email(db: AsyncSession, email: str):
     result = await db.execute(select(User).filter(User.email == email.lower()))
     return result.scalars().first()
@@ -20,13 +14,20 @@ async def get_user_by_phone_number(db: AsyncSession, phone_number: str) -> User 
     return result.scalars().first()
 
 
+async def get_user_by_citizen_id(db: AsyncSession, citizen_id: str) -> User | None:
+    result = await db.execute(select(User).filter(User.citizen_id == citizen_id))
+    return result.scalars().first()
+
+
 async def create_user(db: AsyncSession, user: UserCreate, hashed_password: str):
     db_user = User(
-        username=user.username,
         email=user.email,
         phone_number=user.phone_number,
-        full_name=user.full_name,
+        citizen_id=user.citizen_id,
         hashed_password=hashed_password,
+        first_name_th=user.first_name_th,
+        last_name_th=user.last_name_th,
+        user_type=user.user_type
     )
     db.add(db_user)
     await db.commit()

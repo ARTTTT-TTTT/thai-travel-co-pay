@@ -129,6 +129,12 @@ fastapi dev
 fastapi run
 ```
 
+### 📝 test
+
+```bash
+pytest -v
+```
+
 ---
 
 ## 🧹 Format documents 🧹
