@@ -89,21 +89,35 @@ def custom_openapi():
     )
 
     openapi_schema["components"]["securitySchemes"] = {
-        "OAuth2PasswordBearer": {
-            "type": "oauth2",
-            "flows": {
-                "password": {
-                    # 👇 NOTE: Use full path with prefix
-                    "tokenUrl": f"{app_config.API_STR}/auth/login",
-                    "scopes": {},
-                }
-            },
-        }
+        "RefreshToken": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Use refresh token",
+        },
+        "AccessToken": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Use access token",
+        },
     }
 
-    for path in openapi_schema["paths"].values():
-        for method in path.values():
-            method["security"] = [{"OAuth2PasswordBearer": []}]
+    protected_access_token_paths = [
+        f"{app_config.API_STR}/users/me",
+    ]
+
+    protected_refresh_token_paths = [
+        f"{app_config.API_STR}/auth/pin",
+        f"{app_config.API_STR}/auth/pin",
+    ]
+
+    for path, methods in openapi_schema["paths"].items():
+        for method in methods.values():
+            if any(path.startswith(p) for p in protected_access_token_paths):
+                method["security"] = [{"AccessToken": []}]
+            elif any(path.startswith(p) for p in protected_refresh_token_paths):
+                method["security"] = [{"RefreshToken": []}]
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema

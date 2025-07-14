@@ -1,4 +1,5 @@
 import pytest
+from fastapi import status
 from httpx import AsyncClient
 from httpx import ASGITransport
 
@@ -31,18 +32,19 @@ async def test_register_success_multiple_cases(
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": user_type,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         assert data["email"] == email
         assert data["phone_number"] == phone_number
         assert data["citizen_id"] == citizen_id
         assert data["first_name_th"] == "ชื่อภาษาไทย"
         assert data["last_name_th"] == "นามสกุลภาษาไทย"
-        assert data["agreed_to_terms"] is False
+        assert data["agreed_to_terms"] is True
         assert data["is_active"] is True
         assert "id" in data
         assert "created_at" in data
@@ -67,6 +69,7 @@ async def test_register_email_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
@@ -79,10 +82,11 @@ async def test_register_email_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 409
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert response.json()["detail"] == "Email already registered"
 
 
@@ -99,6 +103,7 @@ async def test_register_phone_number_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
@@ -111,10 +116,11 @@ async def test_register_phone_number_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 409
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert response.json()["detail"] == "Phone number already registered"
 
 
@@ -131,6 +137,7 @@ async def test_register_citizen_id_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
@@ -143,10 +150,11 @@ async def test_register_citizen_id_taken(prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 409
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert response.json()["detail"] == "Citizen id already registered"
 
 
@@ -179,10 +187,11 @@ async def test_register_invalid_email_format(prepare_database, email):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 @pytest.mark.asyncio
@@ -202,10 +211,11 @@ async def test_register_invalid_phone_number_format(phone, prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         # assert "Phone number must contain digits only" in response.text
 
 
@@ -226,10 +236,11 @@ async def test_register_invalid_citizen_id_format(citizen_id, prepare_database):
                 "first_name_th": "ชื่อภาษาไทย",
                 "last_name_th": "นามสกุลภาษาไทย",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         # assert "Citizen id must contain digits only" in response.text
 
 
@@ -250,10 +261,11 @@ async def test_register_invalid_first_name_th(first_name_th, prepare_database):
                 "first_name_th": first_name_th,
                 "last_name_th": "นามสกุล",
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         # assert "First name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long." in response.text
 
 
@@ -274,8 +286,9 @@ async def test_register_invalid_last_name_th(last_name_th, prepare_database):
                 "first_name_th": "ชื่อ",
                 "last_name_th": last_name_th,
                 "user_type": UserTypeEnum.OPERATOR.value,
+                "agreed_to_terms": True,
                 "password": "password",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         # assert "Last name (TH) must contain only Thai characters (no spaces, numbers, or symbols) and be 1-50 characters long." in response.text

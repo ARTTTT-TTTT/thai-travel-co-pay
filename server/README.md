@@ -98,7 +98,7 @@ poetry env info --path
 ## 🛢 First Initial Database 🛢
 
 ```bash
-./alembic/init_db.sh
+./scripts/init_db.sh
 ```
 
 ---

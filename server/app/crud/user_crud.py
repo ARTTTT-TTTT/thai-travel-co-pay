@@ -1,4 +1,5 @@
 # crud/user_crud.py
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models import User
@@ -29,7 +30,22 @@ async def create_user(db: AsyncSession, user: UserCreate, password_hash: str):
         first_name_th=user.first_name_th,
         last_name_th=user.last_name_th,
         user_type=user.user_type,
+        agreed_to_terms=user.agreed_to_terms,
     )
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
+
+async def pin_setup(db: AsyncSession, id: int, pin_hash: str):
+    result = await db.execute(select(User).where(User.id == id))
+    db_user = result.scalar_one_or_none()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    setattr(db_user, "pin_hash", pin_hash)
+
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)

@@ -1,4 +1,5 @@
 import pytest
+from fastapi import status
 from httpx import AsyncClient
 from httpx import ASGITransport
 
@@ -31,6 +32,7 @@ async def test_login_success_multiple_cases(prepare_database, username):
             first_name_th="ชื่อภาษาไทย",
             last_name_th="นามสกุลภาษาไทย",
             user_type=UserTypeEnum.TOURIST.value,
+            agreed_to_terms=True,
             password_hash=password_hash,
         )
 
@@ -39,13 +41,13 @@ async def test_login_success_multiple_cases(prepare_database, username):
             await session.commit()
             await session.refresh(user_obj)
 
-        response_email = await client.post(
+        response = await client.post(
             "/api/auth/login",
             data={"username": username, "password": password},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert response_email.status_code == 200
-        assert "access_token" in response_email.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert "refresh_token" in response.json()
 
 
 @pytest.mark.asyncio
@@ -61,6 +63,7 @@ async def test_login_incorrect_password(prepare_database):
             first_name_th="ชื่อภาษาไทย",
             last_name_th="นามสกุลภาษาไทย",
             user_type=UserTypeEnum.TOURIST.value,
+            agreed_to_terms=True,
             password_hash=password_hash,
         )
         async with TestingSessionLocal() as session:
@@ -73,7 +76,7 @@ async def test_login_incorrect_password(prepare_database):
             data={"username": "wrongpass", "password": "incorrectpassword"},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert response.status_code == 401
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Incorrect email, phone number, citizen id or password"
 
 
@@ -86,7 +89,7 @@ async def test_login_user_not_found(prepare_database):
             data={"username": "nonexistentuser", "password": "anypassword"},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert response.status_code == 401
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Incorrect email, phone number, citizen id or password"
 
 
@@ -109,6 +112,7 @@ async def test_login_case_insensitivity(prepare_database, username):
             first_name_th="ชื่อภาษาไทย",
             last_name_th="นามสกุลภาษาไทย",
             user_type=UserTypeEnum.TOURIST.value,
+            agreed_to_terms=True,
             password_hash=password_hash,
         )
 
@@ -117,7 +121,7 @@ async def test_login_case_insensitivity(prepare_database, username):
             await session.commit()
             await session.refresh(user_obj)
 
-        response_email = await client.post(
+        response = await client.post(
             "/api/auth/login",
             data={
                 "username": username,
@@ -125,5 +129,5 @@ async def test_login_case_insensitivity(prepare_database, username):
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert response_email.status_code == 200
-        assert "access_token" in response_email.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert "refresh_token" in response.json()

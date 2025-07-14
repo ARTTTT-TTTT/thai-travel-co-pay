@@ -8,16 +8,17 @@ from app.models import UserTypeEnum
 
 
 class UserBase(BaseModel):
-    email: EmailStr
-    phone_number: str
-    citizen_id: str
-    first_name_th: str
-    last_name_th: str
-    user_type: UserTypeEnum = UserTypeEnum.TOURIST
+    email: EmailStr = "user.name@example.com"
+    phone_number: str = "0812345678"
+    citizen_id: str = "1234567890123"
+    first_name_th: str = "สมชาย"
+    last_name_th: str = "ใจดี"
 
 
 class UserCreate(UserBase):
     password: str
+    agreed_to_terms: bool
+    user_type: UserTypeEnum = UserTypeEnum.TOURIST
 
     @field_validator("email")
     @classmethod
@@ -65,8 +66,22 @@ class UserCreate(UserBase):
         return v.strip()
 
 
+class Pin(BaseModel):
+    pin: str
+
+    @field_validator("pin")
+    @classmethod
+    def validate_phone_number(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not re.fullmatch(r"[0-9]{6}", v):
+            raise ValueError("Pin must contain digits only (6 characters), no spaces or symbols")
+        return v.strip()
+
+
 class UserOut(UserBase):
     id: int
+    user_type: UserTypeEnum
     agreed_to_terms: bool
     is_active: bool
     created_at: datetime

@@ -13,9 +13,11 @@ class AppConfig(BaseSettings):
     PROJECT_NAME: str = "THAI TRAVEL CO PAY"
     API_STR: str = "/api"
 
-    SECRET_KEY: str = "secret_key"
-    ALGORITHM: str = "HS256"
+    REFRESH_SECRET_KEY: str = "refresh_secret_key"
+    REFRESH_TOKEN_EXPIRE: int = 10080
+    ACCESS_SECRET_KEY: str = "access_secret_key"
     ACCESS_TOKEN_EXPIRE: int = 10080
+    ALGORITHM: str = "HS256"
 
     FRONTEND_URL: str = ""
     BACKEND_URL: list[AnyUrl] | str = []
